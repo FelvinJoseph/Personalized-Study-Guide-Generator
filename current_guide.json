@@ -1,0 +1,50 @@
+{
+    "study_guide_title": "Mastering Packetization: A 3-Day Visual & Conceptual Guide",
+    "total_days": 3,
+    "study_plan": [
+        {
+            "day": 1,
+            "focus_topic": "Fundamentals of Packetization: Concept and Necessity",
+            "tasks": [
+                "Watch animated explainers and simulations demonstrating 'What is Packetization?' and the journey of data from source to destination.",
+                "Draw a detailed flowchart illustrating the end-to-end process of data packetization, including segmentation and encapsulation.",
+                "Read conceptual articles and visualize analogies (e.g., postal system) explaining the 'why' behind packetization (efficiency, error handling, shared bandwidth).",
+                "Study diagrams depicting a simple network data flow, focusing on how packets enable concurrent communication."
+            ]
+        },
+        {
+            "day": 2,
+            "focus_topic": "Packet Structure and Key Protocols (TCP/IP, UDP)",
+            "tasks": [
+                "Examine visual representations of TCP and UDP packet headers, identifying and understanding the conceptual role of each field (e.g., source/destination ports, sequence numbers).",
+                "Create concept maps or comparison charts highlighting the structural and functional differences between TCP and UDP packets, along with their respective use cases.",
+                "Analyze screenshots or simple examples of packet captures (e.g., from Wireshark) to visually identify headers, payload, and protocol types.",
+                "Sketch out the encapsulation and de-encapsulation process, showing how different protocol headers are added and removed at various layers."
+            ]
+        },
+        {
+            "day": 3,
+            "focus_topic": "Packet Flow, Addressing, and Network Dynamics",
+            "tasks": [
+                "Illustrate the conceptual journey of a packet across multiple routers within a network, tracing its path and how IP addresses guide it.",
+                "Study diagrams and conceptual models of IP addressing (IPv4/IPv6) and basic routing principles, understanding how destinations are determined.",
+                "Watch videos or view interactive animations explaining dynamic packet behaviors such as fragmentation, reassembly, reordering, and acknowledgments.",
+                "Review visual explanations of common packet-related network issues like latency, packet loss, and jitter, understanding their conceptual impact on data transmission."
+            ]
+        }
+    ],
+    "key_terms": [
+        "Packet",
+        "Header (TCP/UDP, IP)",
+        "Payload",
+        "Encapsulation",
+        "Segmentation",
+        "IP Address (Source/Destination)",
+        "Routing"
+    ],
+    "high_priority_practice": [
+        "**Diagram-based Analysis (Mixed):** Given a network topology diagram and a data flow scenario, trace the path of a packet, indicating how its key header fields (e.g., IP addresses, sequence numbers) would change at each hop or network device.",
+        "**Conceptual Explanation (Short Answer):** Describe conceptually how packetization facilitates multiplexing and error recovery in a network, using a visual metaphor or analogy to support your explanation.",
+        "**Protocol Choice Justification (Problem Solving):** For two different application types (e.g., real-time voice call vs. file download), justify which packetization protocol (TCP or UDP) would be conceptually more appropriate for each, explaining your reasoning based on their inherent characteristics."
+    ]
+}

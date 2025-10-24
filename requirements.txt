@@ -1,0 +1,7 @@
+Flask
+google-genai
+pydantic>=2.0
+python-dotenv
+Pillow
+PyPDF2
+PyMuPDF

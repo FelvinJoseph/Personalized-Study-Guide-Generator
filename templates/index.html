@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized Study Guide Generator</title>
+    <style>
+        /* Dark Theme & Standard UI Styling */
+        :root {
+            --color-bg-dark: #0f172a;
+            --color-card-dark: #1e293b;
+            --color-text-light: #e2e8f0;
+            --color-accent-blue: #38bdf8;
+            --color-accent-green: #10b981;
+            --color-accent-teal: #14b8a6;
+            --color-warning-yellow: #facc15;
+            --color-error-red: #ef4444;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-light);
+            transition: background-color 0.3s;
+        }
+        
+        h1 { 
+            color: var(--color-accent-blue); 
+            border-bottom: 2px solid var(--color-accent-blue); 
+            padding-bottom: 12px; 
+            font-size: 2.2em;
+            margin-bottom: 25px;
+        }
+        h2 { color: var(--color-accent-green); margin-top: 35px; font-size: 1.8em; }
+        h3 { 
+            color: var(--color-accent-teal); 
+            margin-top: 25px; 
+            border-bottom: 1px dashed var(--color-accent-teal); 
+            padding-bottom: 8px; 
+            font-size: 1.4em;
+        }
+        
+        /* Form Styling */
+        #uploadForm {
+            padding: 25px;
+            background: var(--color-card-dark);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; 
+            align-items: end;
+        }
+
+        #uploadForm label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--color-accent-blue);
+        }
+        
+        input[type="file"], input[type="number"], input[type="text"] { 
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #334155; 
+            background-color: #0f172a;
+            color: var(--color-text-light);
+            padding: 10px; 
+            border-radius: 6px; 
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: var(--color-accent-blue);
+            outline: none;
+        }
+
+        button {
+            /* Changed from 'span full' to 'span 2 / -1' on wider screens for better layout */
+            grid-column: 1 / -1; 
+            padding: 12px 25px;
+            background-color: var(--color-accent-green);
+            color: var(--color-bg-dark);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover { 
+            background-color: #059669; /* Darker green for hover */
+            transform: translateY(-1px);
+        }
+        
+        /* Results and Loading */
+        #results { 
+            margin-top: 20px; 
+            padding: 30px; 
+            background: var(--color-card-dark);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.8s ease-out;
+        }
+        .loading { 
+            color: var(--color-accent-blue); 
+            font-style: italic; 
+            padding: 15px; 
+            border: 1px solid #334155;
+            background: #1e293b;
+            border-radius: 6px;
+            text-align: center;
+            display: flex; /* Use flexbox for alignment */
+            align-items: center;
+            justify-content: center;
+            font-weight: 600; 
+        }
+        .error { 
+            color: var(--color-error-red); 
+            font-weight: bold; 
+            background: #450a0a; 
+            padding: 15px; 
+            border: 1px solid var(--color-error-red);
+            border-radius: 6px; 
+        }
+
+        /* Spinner Animation (The Fun Part!) */
+        .spinner-cube {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            background-color: var(--color-accent-blue);
+            display: inline-block;
+            vertical-align: middle;
+            animation: cube-spin 1.5s infinite ease-in-out;
+            border-radius: 4px;
+        }
+
+        @keyframes cube-spin {
+            0% { transform: perspective(120px) rotateX(0deg) rotateY(0deg); }
+            50% { transform: perspective(120px) rotateX(-180deg) rotateY(0deg); }
+            100% { transform: perspective(120px) rotateX(-180deg) rotateY(-180deg); }
+        }
+
+        /* Study Guide Specifics */
+        /* Changed from ol, ul to just ul */
+        ul { padding-left: 20px; line-height: 1.6; }
+        
+        /* Study Plan Days - TARGETING THE UL .study-plan-list */
+        .study-plan-list { 
+            list-style: none; /* Remove default bullet/numbering */
+            padding-left: 0;
+            counter-reset: custom-counter; /* Initialize the counter on the UL */
+        }
+        
+        .study-plan-list > li { /* Targeting direct children LI of the UL */
+            margin-bottom: 20px; 
+            padding: 15px; 
+            background: #152233; 
+            border-left: 5px solid var(--color-accent-green); 
+            border-radius: 8px; 
+            counter-increment: custom-counter; /* Increment the counter for each Day LI */
+        }
+
+        /* Custom 'Day X.' content */
+        .study-plan-list > li::before {
+            content: "Day " counter(custom-counter) ".";
+            font-weight: bold;
+            color: var(--color-accent-green);
+            margin-right: 10px;
+        }
+        
+        .study-plan-list > li strong { 
+            color: var(--color-accent-blue); 
+            display: block; 
+            margin-bottom: 8px; 
+            font-size: 1.15em; 
+            padding-top: 5px;
+        }
+        
+        /* Inner Task List - Now a normal bulleted list */
+        .study-plan-list > li > ul { 
+            list-style-type: disc; /* Ensure it's a normal bullet list */
+            padding-left: 20px; /* Indent the bullets */
+        }
+
+        .study-plan-list > li > ul > li { 
+            background: #1f3044; 
+            border-left: 3px solid var(--color-accent-teal); 
+            font-size: 0.95em; 
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            /* Removed custom list-style/counter settings from here */
+        }
+        
+        /* Key Terms Styling */
+        #results > p:first-of-type { 
+            background: #422006; 
+            color: var(--color-warning-yellow); 
+            padding: 18px; 
+            border-radius: 6px; 
+            font-weight: bold;
+            border: 1px solid #78350f;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        
+        /* Question Lists */
+        .question-list { list-style: none; padding-left: 0; }
+        .question-list li {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--color-warning-yellow); 
+            background: #253140; 
+            font-weight: 500;
+            border-radius: 6px;
+        }
+        .laq-list li {
+            border-left: 4px solid var(--color-error-red); 
+            background: #2e1c27;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #uploadForm {
+                grid-template-columns: 1fr;
+            }
+            button {
+                grid-column: 1;
+            }
+            body {
+                padding: 15px;
+            }
+        }
+
+        /* Fade-in Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <h1>📚 Personalized Study Guide Generator</h1>
+    
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div>
+            <label for="daysInput">Study Days (1-10):</label>
+            <input type="number" id="daysInput" name="study_days" min="1" max="10" value="3" required>
+        </div>
+        
+        <div>
+            <label for="moduleInput">Module Number (Optional):</label>
+            <input type="text" id="moduleInput" name="module_number" placeholder="e.g., Module 3"> 
+        </div>
+        
+        <div>
+            <label for="fileInput">Study Notes/Book (Required):</label>
+            <input type="file" name="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt" required>
+        </div>
+        
+        <div>
+            <label for="paperInput">Previous Papers (Optional):</label>
+            <input type="file" name="past_paper" id="paperInput" accept=".pdf,.txt" multiple> 
+        </div>
+        
+        <button type="submit">Generate Study Guide</button>
+    </form>
+    
+    <div id="loading" class="loading" style="display:none;">
+        <div class="spinner-cube"></div> 
+        <span id="loading-text">Fueling the study genius... analyzing concepts!</span>
+    </div>
+    <div id="results">
+        </div>
+
+    <script>
+        // Array of funny/engaging loading messages
+        const loadingMessages = [
+            "Fueling the study genius... analyzing concepts!",
+            "Crunching past papers. We found the question nobody asked for!",
+            "Synthesizing knowledge. Hold tight, your brain expansion pack is loading.",
+            "Filtering procrastination... (Warning: this step may fail on Day 7).",
+            "Just a moment, reading every single page... twice.",
+            "Predicting the future of your exams. Please remain calm."
+        ];
+        
+        let messageIndex = 0;
+        let messageInterval;
+
+        function startMessageCycle() {
+            const loadingTextSpan = document.getElementById('loading-text');
+            messageIndex = 0; // Reset index every time we start
+            loadingTextSpan.textContent = loadingMessages[messageIndex]; // Set initial message
+            
+            messageInterval = setInterval(() => {
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+                loadingTextSpan.textContent = loadingMessages[messageIndex];
+            }, 5000); // Change message every 5 seconds
+        }
+
+        function stopMessageCycle() {
+            clearInterval(messageInterval);
+        }
+
+
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const daysInput = document.getElementById('daysInput');
+            const paperInput = document.getElementById('paperInput');
+            const moduleInput = document.getElementById('moduleInput'); 
+            const moduleNumber = moduleInput.value.trim(); 
+
+            const loading = document.getElementById('loading');
+            const resultsDiv = document.getElementById('results');
+
+            if (!file) {
+                resultsDiv.innerHTML = '<p class="error">Please select a study notes file to begin.</p>';
+                return;
+            }
+
+            loading.style.display = 'flex'; // Show loading
+            startMessageCycle();            // Start animation and messages
+            resultsDiv.innerHTML = '';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('study_days', daysInput.value);
+            
+            if (moduleNumber) {
+                formData.append('module_number', moduleNumber);
+            }
+
+            if (paperInput.files.length > 0) {
+                for (const pastPaper of paperInput.files) {
+                    formData.append('past_paper', pastPaper);
+                }
+            }
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                stopMessageCycle(); // Stop the message cycling
+                loading.style.display = 'none'; // Hide loading
+
+                if (data.success) {
+                    const guide = data.study_guide;
+                    
+                    let html = `<h1>${guide.study_guide_title}</h1>`;
+                    html += `<h2>🗓️ ${guide.total_days}-Day Study Plan</h2>`;
+                    
+                    // --- 1. Key Terms ---
+                    html += '<h3>🔑 Key Terms to Master</h3>';
+                    html += `<p>${guide.key_terms.join(' | ')}</p>`;
+
+                    // --- 2. High-Priority Practice (Moved up for focus) ---
+                    html += '<h3>🎯 High-Priority Practice (Analyzed from Past Papers)</h3>';
+                    html += '<ul class="question-list">';
+                    guide.high_priority_practice.forEach(practice => {
+                        html += `<li>${practice}</li>`;
+                    });
+                    html += '</ul>';
+
+                    // --- 3. Day-by-Day Study Plan ---
+                    html += '<h3>🗓️ Detailed Study Schedule</h3>';
+                    // *** MODIFIED HERE: Changed <ol> to <ul> ***
+                    html += '<ul class="study-plan-list">';
+                    
+                    // Limit the display of study plan days to the number requested by the user
+                    const requestedDays = parseInt(daysInput.value, 10);
+                    // Use slice to take only the first 'requestedDays' elements from the API response
+                    const planToDisplay = guide.study_plan.slice(0, requestedDays);
+
+                    planToDisplay.forEach(dayPlan => {
+                        html += `<li><strong>${dayPlan.focus_topic}</strong>`;
+                        // Inner list remains <ul> for simple bullets
+                        html += '<ul>';
+                        dayPlan.tasks.forEach(task => {
+                            html += `<li>${task}</li>`;
+                        });
+                        html += '</ul></li>';
+                    });
+                    // *** MODIFIED HERE: Changed </ol> to </ul> ***
+                    html += '</ul>';
+
+                    // --- 4. Predicted Short Answer Questions (SAQs) ---
+                    html += '<h3>❓ Predicted Short Answer Questions (SAQs)</h3>';
+                    html += '<ul class="question-list">';
+                    guide.short_answer_questions.forEach(q => {
+                        html += `<li>${q}</li>`;
+                    });
+                    html += '</ul>';
+                    
+                    // --- 5. Predicted Long Answer Questions (LAQs) ---
+                    html += '<h3>✍️ Predicted Long Answer Questions (LAQs)</h3>';
+                    html += '<ul class="question-list laq-list">';
+                    guide.long_answer_questions.forEach(q => {
+                        html += `<li>${q}</li>`;
+                    });
+                    html += '</ul>'; 
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                stopMessageCycle(); // Stop the message cycling
+                loading.style.display = 'none';
+                resultsDiv.innerHTML = `<p class="error">An unexpected error occurred: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
