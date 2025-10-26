@@ -112,7 +112,7 @@ Once setup and configuration are complete:
 
 ## 👤 Contact
 
-Project Link: [https://github.com/YourUsername/study-guide-generator](https://github.com/YourUsername/study-guide-generator)
+Project Link: https://github.com/FelvinJoseph/Personalized-Study-Guide-Generator
 
 Your Name: Felvin Joseph A F
 
