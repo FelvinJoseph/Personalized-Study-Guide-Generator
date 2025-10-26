@@ -96,6 +96,18 @@ Once setup and configuration are complete:
 ## Interface
 <img width="1832" height="909" alt="Screenshot 2025-10-24 174801" src="https://github.com/user-attachments/assets/3bd648f6-c4c1-43cf-babf-fe2382b42e30" />
 
+<img width="1920" height="1080" alt="Screenshot 2025-10-25 212913" src="https://github.com/user-attachments/assets/577d112c-d47f-4895-b908-36e918c36bd9" />
+
+<img width="1920" height="1080" alt="Screenshot 2025-10-25 213058" src="https://github.com/user-attachments/assets/a7f4f6b0-41af-4303-b61e-f68219a9d707" />
+
+<img width="1920" height="1080" alt="Screenshot 2025-10-25 213107" src="https://github.com/user-attachments/assets/fb157553-fa88-4064-b17b-a399a1bef520" />
+
+<img width="1920" height="1080" alt="Screenshot 2025-10-25 213119" src="https://github.com/user-attachments/assets/892db613-2341-41e0-915b-fe5a39678b95" />
+
+<img width="1920" height="1080" alt="Screenshot 2025-10-25 213131" src="https://github.com/user-attachments/assets/412ea411-88cb-4611-bb27-df9aad539ad3" />
+
+<img width="1920" height="1080" alt="Screenshot 2025-10-25 213138" src="https://github.com/user-attachments/assets/43a8887c-deb1-4521-b1f5-68ff440a6e62" />
+
 
 
 ## 👤 Contact
