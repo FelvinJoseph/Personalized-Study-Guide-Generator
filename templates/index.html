@@ -15,6 +15,7 @@
             --color-accent-teal: #14b8a6;
             --color-warning-yellow: #facc15;
             --color-error-red: #ef4444;
+            --color-purple: #a855f7;
         }
 
         body { 
@@ -78,7 +79,6 @@
         }
 
         button {
-            /* Changed from 'span full' to 'span 2 / -1' on wider screens for better layout */
             grid-column: 1 / -1; 
             padding: 12px 25px;
             background-color: var(--color-accent-green);
@@ -89,11 +89,40 @@
             font-weight: bold;
             transition: background-color 0.3s, transform 0.1s;
         }
-        button:hover { 
+        button:hover:not(:disabled) { 
             background-color: #059669; /* Darker green for hover */
             transform: translateY(-1px);
         }
+        button:disabled {
+            background-color: #3f6212;
+            cursor: not-allowed;
+        }
+
+        /* NEW: Plan Mode Selector Styling */
+        #planModeContainer {
+            grid-column: 1 / -1; /* Span the whole row */
+            padding: 10px 0;
+            border-bottom: 1px dashed #334155;
+            margin-bottom: 10px;
+        }
+        .radio-group label {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 20px;
+            font-weight: normal;
+            color: var(--color-text-light);
+            cursor: pointer;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+            width: auto;
+        }
         
+        /* Conditional Input Groups */
+        .conditional-input {
+            grid-column: span 1; 
+        }
+
         /* Results and Loading */
         #results { 
             margin-top: 20px; 
@@ -144,7 +173,6 @@
         }
 
         /* Study Guide Specifics */
-        /* Changed from ol, ul to just ul */
         ul { padding-left: 20px; line-height: 1.6; }
         
         /* Study Plan Days - TARGETING THE UL .study-plan-list */
@@ -192,7 +220,6 @@
             padding: 8px;
             margin-bottom: 5px;
             border-radius: 4px;
-            /* Removed custom list-style/counter settings from here */
         }
         
         /* Key Terms Styling */
@@ -207,19 +234,33 @@
             margin-bottom: 20px;
         }
         
-        /* Question Lists */
+        /* Question Lists & Answers */
         .question-list { list-style: none; padding-left: 0; }
         .question-list li {
             padding: 12px;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
             border-left: 4px solid var(--color-warning-yellow); 
             background: #253140; 
             font-weight: 500;
             border-radius: 6px;
         }
         .laq-list li {
-            border-left: 4px solid var(--color-error-red); 
-            background: #2e1c27;
+            border-left: 4px solid var(--color-purple); /* Changed color for LAQs */
+            background: #2e1c3a;
+        }
+        .question-list .answer {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--color-bg-dark); /* Dark background for answer box */
+            border-top: 1px dashed #334155;
+            font-size: 0.9em;
+            font-weight: normal;
+            color: var(--color-text-light);
+        }
+        .answer strong {
+            color: var(--color-accent-green);
+            display: block;
+            margin-bottom: 5px;
         }
 
         /* Responsive adjustments */
@@ -232,6 +273,9 @@
             }
             body {
                 padding: 15px;
+            }
+            #planModeContainer {
+                grid-column: 1;
             }
         }
 
@@ -246,21 +290,40 @@
     <h1>📚 Personalized Study Guide Generator</h1>
     
     <form id="uploadForm" enctype="multipart/form-data">
+        <div id="planModeContainer">
+            <label>Select Plan Scope:</label>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="plan_mode" value="subject" id="subjectMode" checked>
+                    Full Subject Exam
+                </label>
+                <label>
+                    <input type="radio" name="plan_mode" value="module" id="moduleMode">
+                    Single Module Focus
+                </label>
+            </div>
+        </div>
+        
         <div>
             <label for="daysInput">Study Days (1-10):</label>
             <input type="number" id="daysInput" name="study_days" min="1" max="10" value="3" required>
         </div>
         
-        <div>
-            <label for="moduleInput">Module Number (Optional):</label>
-            <input type="text" id="moduleInput" name="module_number" placeholder="e.g., Module 3"> 
+        <div id="moduleNumberGroup" class="conditional-input" style="display:none;">
+            <label for="moduleInput">Specific Module Number:</label>
+            <input type="text" id="moduleInput" name="module_number" placeholder="e.g., Module 3: Networking Basics"> 
         </div>
         
-        <div>
-            <label for="fileInput">Study Notes/Book (Required):</label>
-            <input type="file" name="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt" required>
+        <div id="allModulesGroup" class="conditional-input">
+            <label for="allModulesInput">All Modules Notes (Required for Subject Mode):</label>
+            <input type="file" name="all_modules_file" id="allModulesInput" accept=".pdf,.png,.jpg,.jpeg,.txt" multiple required>
         </div>
         
+        <div id="singleModuleGroup" class="conditional-input" style="display:none;">
+            <label for="fileInput">Single Module Notes/Book (Required for Module Mode):</label>
+            <input type="file" name="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.txt">
+        </div>
+
         <div>
             <label for="paperInput">Previous Papers (Optional):</label>
             <input type="file" name="past_paper" id="paperInput" accept=".pdf,.txt" multiple> 
@@ -277,7 +340,6 @@
         </div>
 
     <script>
-        // Array of funny/engaging loading messages
         const loadingMessages = [
             "Fueling the study genius... analyzing concepts!",
             "Crunching past papers. We found the question nobody asked for!",
@@ -305,37 +367,85 @@
             clearInterval(messageInterval);
         }
 
+        // NEW: Toggle visibility of inputs based on Plan Mode
+        function toggleInputFields() {
+            const mode = document.querySelector('input[name="plan_mode"]:checked').value;
+            const moduleGroup = document.getElementById('moduleNumberGroup');
+            const allModulesGroup = document.getElementById('allModulesGroup');
+            const singleModuleGroup = document.getElementById('singleModuleGroup');
+            const singleModuleInput = document.getElementById('fileInput');
+            const allModulesInput = document.getElementById('allModulesInput');
+
+            if (mode === 'module') {
+                moduleGroup.style.display = 'block';
+                singleModuleGroup.style.display = 'block';
+                allModulesGroup.style.display = 'none';
+                singleModuleInput.required = true;
+                allModulesInput.required = false;
+                singleModuleInput.name = 'file'; // Use the expected backend field name
+            } else { // subject mode
+                moduleGroup.style.display = 'none';
+                singleModuleGroup.style.display = 'none';
+                allModulesGroup.style.display = 'block';
+                singleModuleInput.required = false;
+                allModulesInput.required = true;
+                singleModuleInput.name = 'file_disabled'; // Prevent sending this field
+            }
+        }
+        
+        // Initialize the fields on load
+        document.addEventListener('DOMContentLoaded', toggleInputFields);
+        
+        // Listen for radio button changes
+        document.querySelectorAll('input[name="plan_mode"]').forEach(radio => {
+            radio.addEventListener('change', toggleInputFields);
+        });
+
 
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
+            const mode = document.querySelector('input[name="plan_mode"]:checked').value;
             const daysInput = document.getElementById('daysInput');
             const paperInput = document.getElementById('paperInput');
             const moduleInput = document.getElementById('moduleInput'); 
             const moduleNumber = moduleInput.value.trim(); 
+            
+            const mainFileInput = (mode === 'module') ? document.getElementById('fileInput') : document.getElementById('allModulesInput');
+            const files = mainFileInput.files;
 
             const loading = document.getElementById('loading');
             const resultsDiv = document.getElementById('results');
 
-            if (!file) {
-                resultsDiv.innerHTML = '<p class="error">Please select a study notes file to begin.</p>';
+            if (files.length === 0) {
+                resultsDiv.innerHTML = '<p class="error">Please select study notes files to begin.</p>';
                 return;
             }
 
             loading.style.display = 'flex'; // Show loading
-            startMessageCycle();            // Start animation and messages
+            startMessageCycle();            // Start animation and messages
             resultsDiv.innerHTML = '';
+            
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
 
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('plan_mode', mode);
             formData.append('study_days', daysInput.value);
             
-            if (moduleNumber) {
-                formData.append('module_number', moduleNumber);
+            // Append main study files based on mode
+            if (mode === 'module') {
+                formData.append('file', files[0]);
+                if (moduleNumber) {
+                    formData.append('module_number', moduleNumber);
+                }
+            } else { // subject mode
+                for (const file of files) {
+                    formData.append('all_modules_file', file);
+                }
             }
-
+            
+            // Append optional past papers
             if (paperInput.files.length > 0) {
                 for (const pastPaper of paperInput.files) {
                     formData.append('past_paper', pastPaper);
@@ -373,39 +483,34 @@
 
                     // --- 3. Day-by-Day Study Plan ---
                     html += '<h3>🗓️ Detailed Study Schedule</h3>';
-                    // *** MODIFIED HERE: Changed <ol> to <ul> ***
                     html += '<ul class="study-plan-list">';
                     
-                    // Limit the display of study plan days to the number requested by the user
                     const requestedDays = parseInt(daysInput.value, 10);
-                    // Use slice to take only the first 'requestedDays' elements from the API response
                     const planToDisplay = guide.study_plan.slice(0, requestedDays);
 
                     planToDisplay.forEach(dayPlan => {
                         html += `<li><strong>${dayPlan.focus_topic}</strong>`;
-                        // Inner list remains <ul> for simple bullets
                         html += '<ul>';
                         dayPlan.tasks.forEach(task => {
                             html += `<li>${task}</li>`;
                         });
                         html += '</ul></li>';
                     });
-                    // *** MODIFIED HERE: Changed </ol> to </ul> ***
                     html += '</ul>';
 
                     // --- 4. Predicted Short Answer Questions (SAQs) ---
-                    html += '<h3>❓ Predicted Short Answer Questions (SAQs)</h3>';
+                    html += '<h3>❓ Predicted Short Answer Questions (SAQs) & Answers</h3>';
                     html += '<ul class="question-list">';
-                    guide.short_answer_questions.forEach(q => {
-                        html += `<li>${q}</li>`;
+                    guide.short_answer_questions.forEach(qa => {
+                        html += `<li>${qa.question}<div class="answer"><strong>Answer:</strong> ${qa.answer}</div></li>`;
                     });
                     html += '</ul>';
                     
                     // --- 5. Predicted Long Answer Questions (LAQs) ---
-                    html += '<h3>✍️ Predicted Long Answer Questions (LAQs)</h3>';
+                    html += '<h3>✍️ Predicted Long Answer Questions (LAQs) & Answers</h3>';
                     html += '<ul class="question-list laq-list">';
-                    guide.long_answer_questions.forEach(q => {
-                        html += `<li>${q}</li>`;
+                    guide.long_answer_questions.forEach(qa => {
+                        html += `<li>${qa.question}<div class="answer"><strong>Answer:</strong> ${qa.answer}</div></li>`;
                     });
                     html += '</ul>'; 
                     
@@ -417,6 +522,8 @@
                 stopMessageCycle(); // Stop the message cycling
                 loading.style.display = 'none';
                 resultsDiv.innerHTML = `<p class="error">An unexpected error occurred: ${error.message}</p>`;
+            } finally {
+                submitButton.disabled = false;
             }
         });
     </script>
